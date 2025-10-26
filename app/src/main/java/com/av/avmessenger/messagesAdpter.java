@@ -1,119 +1,99 @@
-
-
 package com.av.avmessenger;
-
-import static com.av.avmessenger.chatwindo.reciverIImg;
-import static com.av.avmessenger.chatwindo.senderImg;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-
+import java.util.List;
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class messagesAdpter extends RecyclerView.Adapter {
-    Context context;
-    ArrayList<msgModelclass> messagesAdpterArrayList;
-    int ITEM_SEND=1;
-    int ITEM_RECIVE=2;
+public class messagesAdpter
+        extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    public messagesAdpter(Context context, ArrayList<msgModelclass> messagesAdpterArrayList) {
-        this.context = context;
-        this.messagesAdpterArrayList = messagesAdpterArrayList;
+    private final Context context;
+    private final List<msgModelclass> messages;
+    private final String senderImg, receiverImg;
+    private static final int TYPE_SEND = 1;
+    private static final int TYPE_RECEIVE = 2;
+
+    public messagesAdpter(Context ctx,
+                          List<msgModelclass> msgs,
+                          String sendImg,
+                          String recvImg) {
+        this.context     = ctx;
+        this.messages    = msgs;
+        this.senderImg   = sendImg;
+        this.receiverImg = recvImg;
+    }
+
+    @Override
+    public int getItemViewType(int pos) {
+        String me = FirebaseAuth.getInstance()
+                .getCurrentUser().getUid();
+        return messages.get(pos)
+                .getSenderid()
+                .equals(me)
+                ? TYPE_SEND
+                : TYPE_RECEIVE;
     }
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == ITEM_SEND){
-            View view = LayoutInflater.from(context).inflate(R.layout.sender_layout, parent, false);
-            return new senderVierwHolder(view);
-        }else {
-            View view = LayoutInflater.from(context).inflate(R.layout.reciver_layout, parent, false);
-            return new reciverViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(
+            @NonNull ViewGroup parent, int viewType) {
+        LayoutInflater i = LayoutInflater.from(context);
+        if (viewType == TYPE_SEND) {
+            return new SendVH(
+                    i.inflate(R.layout.sender_layout, parent, false));
+        } else {
+            return new RecvVH(
+                    i.inflate(R.layout.reciver_layout, parent, false));
         }
-
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        msgModelclass messages = messagesAdpterArrayList.get(position);
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                new AlertDialog.Builder(context).setTitle("Delete")
-                        .setMessage("Are you sure you want to delete this message?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-
-                            }
-                        }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.dismiss();
-                            }
-                        }).show();
-
-                return false;
-            }
-        });
-        if (holder.getClass()==senderVierwHolder.class){
-            senderVierwHolder viewHolder = (senderVierwHolder) holder;
-            viewHolder.msgtxt.setText(messages.getMessage());
-            Picasso.get().load(senderImg).into(viewHolder.circleImageView);
-        }else { reciverViewHolder viewHolder = (reciverViewHolder) holder;
-            viewHolder.msgtxt.setText(messages.getMessage());
-            Picasso.get().load(reciverIImg).into(viewHolder.circleImageView);
-
-
+    public void onBindViewHolder(
+            @NonNull RecyclerView.ViewHolder vh, int pos) {
+        msgModelclass m = messages.get(pos);
+        if (vh instanceof SendVH) {
+            SendVH s = (SendVH) vh;
+            s.text.setText(m.getMessage());
+            Picasso.get().load(senderImg).into(s.avatar);
+        } else {
+            RecvVH r = (RecvVH) vh;
+            r.text.setText(m.getMessage());
+            Picasso.get().load(receiverImg).into(r.avatar);
         }
     }
 
     @Override
     public int getItemCount() {
-        return messagesAdpterArrayList.size();
+        return messages.size();
     }
 
-    @Override
-    public int getItemViewType(int position) {
-        msgModelclass messages = messagesAdpterArrayList.get(position);
-        if (FirebaseAuth.getInstance().getCurrentUser().getUid().equals(messages.getSenderid())) {
-            return ITEM_SEND;
-        } else {
-            return ITEM_RECIVE;
+    static class SendVH extends RecyclerView.ViewHolder {
+        CircleImageView avatar;
+        TextView        text;
+        SendVH(@NonNull View v) {
+            super(v);
+            avatar = v.findViewById(R.id.profilerggg);
+            text   = v.findViewById(R.id.msgsendertyp);
         }
     }
 
-    class  senderVierwHolder extends RecyclerView.ViewHolder {
-        CircleImageView circleImageView;
-        TextView msgtxt;
-        public senderVierwHolder(@NonNull View itemView) {
-            super(itemView);
-            circleImageView = itemView.findViewById(R.id.profilerggg);
-            msgtxt = itemView.findViewById(R.id.msgsendertyp);
-
-        }
-    }
-    class reciverViewHolder extends RecyclerView.ViewHolder {
-        CircleImageView circleImageView;
-        TextView msgtxt;
-        public reciverViewHolder(@NonNull View itemView) {
-            super(itemView);
-            circleImageView = itemView.findViewById(R.id.pro);
-            msgtxt = itemView.findViewById(R.id.recivertextset);
+    static class RecvVH extends RecyclerView.ViewHolder {
+        CircleImageView avatar;
+        TextView        text;
+        RecvVH(@NonNull View v) {
+            super(v);
+            avatar = v.findViewById(R.id.pro);
+            text   = v.findViewById(R.id.recivertextset);
         }
     }
 }

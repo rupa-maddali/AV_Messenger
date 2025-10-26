@@ -221,7 +221,7 @@ public class setting extends AppCompatActivity {
         donebut = findViewById(R.id.donebutt);
 
         progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Saing...");
+        progressDialog.setMessage("Saving...");
         progressDialog.setCancelable(false);
 
         DatabaseReference reference = database.getReference().child("user").child(auth.getUid());

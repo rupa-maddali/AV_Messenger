@@ -6,67 +6,65 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-
+import java.util.List;
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class UserAdpter extends RecyclerView.Adapter<UserAdpter.viewholder> {
-    Context mainActivity;
-    ArrayList<Users> usersArrayList;
-    public UserAdpter(MainActivity mainActivity, ArrayList<Users> usersArrayList) {
-        this.mainActivity=mainActivity;
-        this.usersArrayList=usersArrayList;
+class UserAdapter
+        extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
+
+    private final Context ctx;
+    private final List<Users> users;
+
+    public UserAdapter(Context ctx, List<Users> users) {
+        this.ctx   = ctx;
+        this.users = users;
     }
 
     @NonNull
     @Override
-    public UserAdpter.viewholder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mainActivity).inflate(R.layout.user_item,parent,false);
-        return new viewholder(view);
+    public ViewHolder onCreateViewHolder(
+            @NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(ctx)
+                .inflate(R.layout.user_item, parent, false);
+        return new ViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull UserAdpter.viewholder holder, int position) {
+    public void onBindViewHolder(
+            @NonNull ViewHolder h, int pos) {
+        Users u = users.get(pos);
+        h.name.setText(u.getUserName());
+        h.status.setText(u.getStatus());
+        Picasso.get()
+                .load(u.getProfilepic())
+                .into(h.avatar);
 
-        Users users = usersArrayList.get(position);
-        holder.username.setText(users.userName);
-        holder.userstatus.setText(users.status);
-        Picasso.get().load(users.profilepic).into(holder.userimg);
-
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(mainActivity, chatwindo.class);
-                intent.putExtra("nameeee",users.getUserName());
-                intent.putExtra("reciverImg",users.getProfilepic());
-                intent.putExtra("uid",users.getUserId());
-                mainActivity.startActivity(intent);
-
-            }
+        h.itemView.setOnClickListener(v -> {
+            Intent i = new Intent(ctx, chatwindo.class);
+            // these keys must match chatwindo.getIntent().getStringExtra(...)
+            i.putExtra("receiverName", u.getUserName());
+            i.putExtra("receiverImg",  u.getProfilepic());
+            i.putExtra("receiverUid",  u.getUserId());
+            ctx.startActivity(i);
         });
-
     }
 
     @Override
     public int getItemCount() {
-        return usersArrayList.size();
+        return users.size();
     }
 
-    public class viewholder extends RecyclerView.ViewHolder {
-        CircleImageView userimg;
-        TextView username;
-        TextView userstatus;
-        public viewholder(@NonNull View itemView) {
-            super(itemView);
-            userimg = itemView.findViewById(R.id.userimg);
-            username = itemView.findViewById(R.id.username);
-            userstatus = itemView.findViewById(R.id.userstatus);
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        CircleImageView avatar;
+        TextView        name, status;
+        ViewHolder(@NonNull View v) {
+            super(v);
+            avatar = v.findViewById(R.id.userimg);
+            name   = v.findViewById(R.id.username);
+            status = v.findViewById(R.id.userstatus);
         }
     }
 }
